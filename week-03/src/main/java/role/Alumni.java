@@ -19,7 +19,7 @@ public class Alumni extends Role {
 
     @Override
     public String getProfile() {
-        return String.format("🎭 역할: 아기사자\n" +
+        return String.format("🎭 역할: 알럼나이\n" +
                         "👤 이름: %s | 🎓 전공: %s | 📌 기수: %d | 💻 파트: %s\n" +
                         "💼 현재 직무: %s",
                 getName(), getMajor(), getGeneration(), getPart(), currentJob);
