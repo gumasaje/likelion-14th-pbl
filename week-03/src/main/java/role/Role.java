@@ -1,5 +1,6 @@
 package role;
 
+import policy.GenerationSubmissionPolicy;
 import policy.SubmissionPolicy;
 
 public abstract class Role {
@@ -17,8 +18,16 @@ public abstract class Role {
 
     public abstract SubmissionPolicy getPolicy();
 
-    public boolean isSubmittable() {
+    public boolean canSubmitByRole() {
         return getPolicy().canSubmit();
+    }
+
+    public boolean canSubmitByGeneration() {
+        return SubmissionPolicy.ofGeneration(getGeneration()).canSubmit();
+    }
+
+    public boolean canSubmitByAll() {
+        return canSubmitByRole() && canSubmitByGeneration();
     }
 
     public abstract String getProfile();

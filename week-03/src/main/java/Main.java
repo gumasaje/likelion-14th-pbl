@@ -1,3 +1,4 @@
+import policy.GenerationSubmissionPolicy;
 import role.Alumni;
 import role.Lion;
 import role.Role;
@@ -31,7 +32,7 @@ public class Main {
         System.out.print("💼 현재 직무: ");
         String currentPosition = sc.nextLine();
 
-        Role alumni = new Alumni(alumniProfile.name, alumniProfile.major,  alumniProfile.generation, alumniProfile.part, currentPosition);
+        Role alumni = new Alumni(alumniProfile.name, alumniProfile.major, alumniProfile.generation, alumniProfile.part, currentPosition);
 
         System.out.println("\n======== 📋 결과 출력 =========\n");
 
@@ -39,13 +40,20 @@ public class Main {
         printRoleInfo(staff);
         printRoleInfo(alumni);
 
+        System.out.println("\n======== 🔍 조건 정책 결과 =========\n");
+        System.out.println("📌 최소 기수 조건: " + GenerationSubmissionPolicy.MIN_GEN + "기 이상\n");
+
+        printGenerationInfo(lion);
+        printGenerationInfo(staff);
+        printGenerationInfo(alumni);
+
         sc.close();
     }
 
     private static void printRoleInfo(Role role) {
         System.out.println(role.getProfile());
 
-        String status = role.isSubmittable() ? "✅ 가능" : " ❌ 불가능";
+        String status = role.canSubmitByAll() ? "✅ 가능" : " ❌ 불가능";
         System.out.println("📝 과제 제출 가능 여부: " + status);
 
         System.out.println("-----------------------------");
@@ -65,6 +73,15 @@ public class Main {
         String part = sc.nextLine();
 
         return new BasicProfile(name, major, generation, part);
+    }
+
+    private static void printGenerationInfo(Role role) {
+        System.out.println("👤 " + role.getName() + " (" + role.getGeneration() + "기)");
+
+        String status = role.canSubmitByGeneration() ? "✅ 충족" : " ❌ 미충족";
+        System.out.println("📝 기수 조건 충족 여부: " + status);
+
+        System.out.println("-----------------------------");
     }
 
     static class BasicProfile {

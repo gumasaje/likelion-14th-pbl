@@ -4,7 +4,6 @@ import policy.AlumniSubmissionPolicy;
 import policy.SubmissionPolicy;
 
 public class Alumni extends Role {
-
     private String currentJob;
 
     public Alumni(String name, String major, int generation, String part, String currentJob) {
