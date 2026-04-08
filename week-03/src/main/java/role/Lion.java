@@ -1,5 +1,6 @@
 package role;
 
+import policy.GenerationSubmissionPolicy;
 import policy.LionSubmissionPolicy;
 import policy.SubmissionPolicy;
 
@@ -12,8 +13,13 @@ public class Lion extends Role {
     }
 
     @Override
-    public SubmissionPolicy getPolicy() {
+    public SubmissionPolicy getRolePolicy() {
         return new LionSubmissionPolicy();
+    }
+
+    @Override
+    public SubmissionPolicy getGenerationPolicy() {
+        return new GenerationSubmissionPolicy(getGeneration());
     }
 
     @Override

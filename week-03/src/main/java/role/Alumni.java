@@ -1,6 +1,7 @@
 package role;
 
 import policy.AlumniSubmissionPolicy;
+import policy.GenerationSubmissionPolicy;
 import policy.SubmissionPolicy;
 
 public class Alumni extends Role {
@@ -12,8 +13,13 @@ public class Alumni extends Role {
     }
 
     @Override
-    public SubmissionPolicy getPolicy() {
+    public SubmissionPolicy getRolePolicy() {
         return new AlumniSubmissionPolicy();
+    }
+
+    @Override
+    public SubmissionPolicy getGenerationPolicy() {
+        return new GenerationSubmissionPolicy(getGeneration());
     }
 
     @Override
