@@ -4,14 +4,13 @@ import role.Lion;
 import role.Role;
 import role.Staff;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        List<Role> list = new ArrayList<>();
+        MemberService memberService = new MemberService();
 
         while (true) {
             System.out.println("\n====== 🦁 멤버 관리 시스템 ======");
@@ -35,17 +34,6 @@ public class Main {
 
                     System.out.print("👤 이름: ");
                     String name = sc.nextLine();
-
-                    boolean isDuplicated = false;
-                    for (Role member : list) {
-                        if (member.getName().equals(name)) {
-                            System.out.println("❌ [오류] 이미 존재하는 이름입니다.");
-                            isDuplicated = true;
-                            break;
-                        }
-                    }
-                    if (isDuplicated) break;
-
                     System.out.print("🎓 전공: ");
                     String major = sc.nextLine();
                     System.out.print("📌 기수: ");
@@ -62,31 +50,36 @@ public class Main {
                         newMember = new Staff(name, major, generation, part, sc.nextLine());
                     }
 
-                    list.add(newMember);
-
-                    System.out.println("✅ 등록 완료: " + newMember.getName());
+                    try {
+                        memberService.registerMember(newMember);
+                        System.out.println("✅ 등록 완료: " + newMember.getName());
+                    } catch (IllegalArgumentException e) {
+                        System.out.println(e.getMessage());
+                    }
                     break;
                 }
 
                 case 2: {
                     System.out.println("\n--- 📋 전체 멤버 목록 ---");
-                    if (list.isEmpty()) {
+                    List<Role> allMembers = memberService.findAllMembers();
+
+                    if (allMembers.isEmpty()) {
                         System.out.println("❌ [오류] 등록된 멤버가 없습니다.");
                         break;
                     }
 
                     int index = 1;
-                    for (Role member : list) {
+                    for (Role member : allMembers) {
                         System.out.printf("%d. [%s] %s - %d기\n", index++, member.getRoleName(), member.getName(), member.getGeneration());
                     }
 
-                    System.out.printf("📊 총 %d명\n", list.size());
+                    System.out.printf("📊 총 %d명\n", allMembers.size());
                     break;
                 }
 
                 case 3: {
                     System.out.println("\n--- 🔍 이름으로 검색 ---");
-                    if (list.isEmpty()) {
+                    if (memberService.findAllMembers().isEmpty()) {
                         System.out.println("❌ [오류] 리스트가 비어있습니다.");
                         break;
                     }
@@ -94,20 +87,17 @@ public class Main {
                     System.out.print("검색할 이름: ");
                     String findName = sc.nextLine();
 
-                    boolean found = false;
-                    for (Role member : list) {
-                        if (member.getName().equals(findName)) {
-                            System.out.println("\n✨ [검색 결과]");
-                            System.out.println(member.getProfile());
-                            String canSubmit = member.canSubmitByAll() ? "✅ 가능" : "❌ 불가능";
-                            System.out.println("📝 과제 제출 가능 여부: " + canSubmit);
+                    Role findMember = memberService.findMemberByName(findName);
 
-                            found = true;
-                            break;
-                        }
+                    if (findMember == null) {
+                        System.out.println("❌ [오류] 해당 멤버를 찾을 수 없습니다.");
+                        break;
                     }
 
-                    if (!found) System.out.println("❌ [오류] 해당 멤버를 찾을 수 없습니다.");
+                    System.out.println("\n✨ [검색 결과]");
+                    System.out.println(findMember.getProfile());
+                    String canSubmit = findMember.canSubmitByAll() ? "✅ 가능" : "❌ 불가능";
+                    System.out.println("📝 과제 제출 가능 여부: " + canSubmit);
                     break;
                 }
 
