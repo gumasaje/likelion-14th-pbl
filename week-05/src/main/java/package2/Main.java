@@ -9,8 +9,29 @@ import java.util.*;
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        List<Role> list = new ArrayList<>();
-        Map<String, List<Role>> map = new HashMap<>();
+        MemberRepository memberRepository = null;
+
+        while (memberRepository == null) {
+            System.out.println("\n🔧 저장소를 선택하세요: ");
+            System.out.println("1. MemoryMemberRepository (실제 저장)");
+            System.out.println("2. MockMemberRepository (더미 데이터)");
+            System.out.print("선택: ");
+            String repositoryCommand = sc.nextLine();
+
+            switch (repositoryCommand) {
+                case "1":
+                    memberRepository = new MemoryMemberRepository();
+                    break;
+                case "2":
+                    memberRepository = new MockMemberRepository();
+                    break;
+                default:
+                    System.out.println("❌ [오류] 올바른 숫자를 입력해주세요.");
+                    break;
+            }
+        }
+
+        MemberService memberService = new MemberService(memberRepository);
 
         while (true) {
             System.out.println("\n====== 🦁 멤버 관리 시스템 ======");
@@ -20,32 +41,26 @@ public class Main {
             System.out.println("4. 파트별 조회");
             System.out.println("5. 종료");
             System.out.print("선택: ");
-            int command = Integer.parseInt(sc.nextLine());
+            String command = sc.nextLine();
 
             switch (command) {
-                case 1: {
+                case "1": {
+                    if(!memberService.isWritable()) {
+                        System.out.println("❌ [오류] 현재 저장소(Mock)는 읽기 전용입니다. 등록 기능을 사용할 수 없습니다.");
+                        break;
+                    }
+
                     System.out.println("\n--- 📝 멤버 등록 ---");
                     System.out.print("역할 선택 (1: 아기사자, 2: 운영진): ");
-                    int roleNum = Integer.parseInt(sc.nextLine());
+                    String roleNum = sc.nextLine();
 
-                    if (roleNum != 1 && roleNum != 2) {
+                    if (!(roleNum.equals("1") || roleNum.equals("2"))) {
                         System.out.println("❌ [오류] 올바른 숫자를 입력해주세요.");
                         break;
                     }
 
                     System.out.print("👤 이름: ");
                     String name = sc.nextLine();
-
-                    boolean isDuplicated = false;
-                    for (Role member : list) {
-                        if (member.getName().equals(name)) {
-                            System.out.println("❌ [오류] 이미 존재하는 이름입니다.");
-                            isDuplicated = true;
-                            break;
-                        }
-                    }
-                    if (isDuplicated) break;
-
                     System.out.print("🎓 전공: ");
                     String major = sc.nextLine();
                     System.out.print("📌 기수: ");
@@ -53,12 +68,8 @@ public class Main {
                     System.out.print("💻 파트 (백엔드/프론트엔드/기획/디자인): ");
                     String part = sc.nextLine();
 
-                    if (!map.containsKey(part)) {
-                        map.put(part, new ArrayList<>());
-                    }
-
                     Role newMember;
-                    if (roleNum == 1) {
+                    if (roleNum.equals("1")) {
                         System.out.print("🆔 학번: ");
                         newMember = new Lion(name, major, generation, part, sc.nextLine());
                     } else {
@@ -66,32 +77,36 @@ public class Main {
                         newMember = new Staff(name, major, generation, part, sc.nextLine());
                     }
 
-                    list.add(newMember);
-                    map.get(part).add(newMember);
-
-                    System.out.println("✅ 등록 완료: " + newMember.getName());
+                    try {
+                        memberService.registerMember(newMember);
+                        System.out.println("✅ 등록 완료: " + newMember.getName());
+                    } catch (IllegalArgumentException e) {
+                        System.out.println(e.getMessage());
+                    }
                     break;
                 }
 
-                case 2: {
+                case "2": {
                     System.out.println("\n--- 📋 전체 멤버 목록 ---");
-                    if (list.isEmpty()) {
+                    List<Role> allMembers = memberService.findAllMembers();
+
+                    if (allMembers.isEmpty()) {
                         System.out.println("❌ [오류] 등록된 멤버가 없습니다.");
                         break;
                     }
 
                     int index = 1;
-                    for (Role member : list) {
+                    for (Role member : allMembers) {
                         System.out.printf("%d. [%s] %s - %d기\n", index++, member.getRoleName(), member.getName(), member.getGeneration());
                     }
 
-                    System.out.printf("📊 총 %d명\n", list.size());
+                    System.out.printf("📊 총 %d명\n", allMembers.size());
                     break;
                 }
 
-                case 3: {
+                case "3": {
                     System.out.println("\n--- 🔍 이름으로 검색 ---");
-                    if (list.isEmpty()) {
+                    if (memberService.findAllMembers().isEmpty()) {
                         System.out.println("❌ [오류] 리스트가 비어있습니다.");
                         break;
                     }
@@ -99,41 +114,39 @@ public class Main {
                     System.out.print("검색할 이름: ");
                     String findName = sc.nextLine();
 
-                    boolean found = false;
-                    for (Role member : list) {
-                        if (member.getName().equals(findName)) {
-                            System.out.println("\n✨ [검색 결과]");
-                            System.out.println(member.getProfile());
-                            String canSubmit = member.canSubmitByAll() ? "✅ 가능" : "❌ 불가능";
-                            System.out.println("📝 과제 제출 가능 여부: " + canSubmit);
+                    Role findMember = memberService.findMemberByName(findName);
 
-                            found = true;
-                            break;
-                        }
+                    if (findMember == null) {
+                        System.out.println("❌ [오류] 해당 멤버를 찾을 수 없습니다.");
+                        break;
                     }
 
-                    if (!found) System.out.println("❌ [오류] 해당 멤버를 찾을 수 없습니다.");
+                    System.out.println("\n✨ [검색 결과]");
+                    System.out.println(findMember.getProfile());
+                    String canSubmit = findMember.canSubmitByAll() ? "✅ 가능" : "❌ 불가능";
+                    System.out.println("📝 과제 제출 가능 여부: " + canSubmit);
                     break;
                 }
 
-                case 4: {
+                case "4": {
                     System.out.println("\n--- 💻 파트별 조회 ---");
-                    if (map.isEmpty()) {
+                    if (memberService.findAllParts().isEmpty()) {
                         System.out.println("❌ [오류] 등록된 파트가 없습니다.");
                         break;
                     }
 
-                    System.out.println("📂 등록된 파트: " + map.keySet());
+                    System.out.println("📂 등록된 파트: " + memberService.findAllParts());
                     System.out.print("조회할 파트: ");
                     String findPart = sc.nextLine();
 
-                    if (!map.containsKey(findPart)) {
+                    List<Role> partList = memberService.findMembersByPart(findPart);
+
+                    if (partList == null) {
                         System.out.println("❌ [오류] 해당 파트에 등록된 멤버가 없습니다.");
                         break;
                     }
 
                     System.out.printf("\n✨ [%s 파트 멤버]\n", findPart);
-                    List<Role> partList = map.get(findPart);
 
                     int index = 1;
                     for (Role member : partList) {
@@ -142,13 +155,13 @@ public class Main {
                     break;
                 }
 
-                case 5: {
+                case "5": {
                     System.out.println("\n👋 멤버 관리 시스템을 종료합니다.");
                     return;
                 }
 
                 default: {
-                    System.out.println("\n❌ [오류] 올바른 숫자를 입력해주세요.");
+                    System.out.println("❌ [오류] 올바른 숫자를 입력해주세요.");
                     break;
                 }
             }
